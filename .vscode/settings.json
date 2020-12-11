@@ -1,0 +1,9 @@
+{
+    "cmake.sourceDirectory": "${workspaceFolder}/.",
+    "files.associations": {
+        "cstdio": "c",
+        "*.tcc": "c",
+        "limits": "c",
+        "type_traits": "cpp"
+    }
+}

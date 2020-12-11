@@ -1,0 +1,42 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../include/defs.h
+stdio.h
+-
+stdlib.h
+-
+string.h
+-
+disk.h
+../include/disk.h
+ext2.h
+../include/ext2.h
+
+../include/disk.h
+
+../include/ext2.h
+types.h
+../include/types.h
+params.h
+../include/params.h
+
+../include/filetype.h
+
+../include/params.h
+
+../include/types.h
+
+/home/deadpool/Desktop/Programming/FileSystem/src/ext2.c
+defs.h
+/home/deadpool/Desktop/Programming/FileSystem/src/defs.h
+params.h
+/home/deadpool/Desktop/Programming/FileSystem/src/params.h
+filetype.h
+/home/deadpool/Desktop/Programming/FileSystem/src/filetype.h
+

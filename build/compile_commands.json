@@ -1,0 +1,27 @@
+[
+{
+  "directory": "/home/deadpool/Desktop/Programming/FileSystem/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-9  -I/home/deadpool/Desktop/Programming/FileSystem/./include  -g   -o CMakeFiles/main.dir/src/disk.c.o   -c /home/deadpool/Desktop/Programming/FileSystem/src/disk.c",
+  "file": "/home/deadpool/Desktop/Programming/FileSystem/src/disk.c"
+},
+{
+  "directory": "/home/deadpool/Desktop/Programming/FileSystem/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-9  -I/home/deadpool/Desktop/Programming/FileSystem/./include  -g   -o CMakeFiles/main.dir/src/ext2.c.o   -c /home/deadpool/Desktop/Programming/FileSystem/src/ext2.c",
+  "file": "/home/deadpool/Desktop/Programming/FileSystem/src/ext2.c"
+},
+{
+  "directory": "/home/deadpool/Desktop/Programming/FileSystem/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-9  -I/home/deadpool/Desktop/Programming/FileSystem/./include  -g   -o CMakeFiles/main.dir/src/main.c.o   -c /home/deadpool/Desktop/Programming/FileSystem/src/main.c",
+  "file": "/home/deadpool/Desktop/Programming/FileSystem/src/main.c"
+},
+{
+  "directory": "/home/deadpool/Desktop/Programming/FileSystem/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-9  -I/home/deadpool/Desktop/Programming/FileSystem/./include  -g   -o CMakeFiles/main.dir/src/shell.c.o   -c /home/deadpool/Desktop/Programming/FileSystem/src/shell.c",
+  "file": "/home/deadpool/Desktop/Programming/FileSystem/src/shell.c"
+},
+{
+  "directory": "/home/deadpool/Desktop/Programming/FileSystem/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-9  -I/home/deadpool/Desktop/Programming/FileSystem/./include  -g   -o CMakeFiles/main.dir/src/utils.c.o   -c /home/deadpool/Desktop/Programming/FileSystem/src/utils.c",
+  "file": "/home/deadpool/Desktop/Programming/FileSystem/src/utils.c"
+}
+]
