@@ -57,3 +57,33 @@ peek_path(char **path){
   return token; 
 }
 
+char* 
+join(char *s1, char *s2)
+{
+  char *result = (char *)malloc(strlen(s1)+strlen(s2)+1);
+  strcpy(result, s1);
+  strcat(result, s2);
+  return result;
+}
+
+char*
+get_file_name(char *path){
+  int path_len = strlen(path);
+  char *ps, *es;
+  es = ps = path + path_len;
+  for (int i = path_len - 1; i >= 0; i--)
+  {
+    if(path[i] != '/'){
+      ps--;
+    }
+  }
+  int name_len = es - ps;
+  
+  char *name = (char *)malloc(name_len); 
+  for (int i = 0; i < name_len; i++)
+  {
+    /* code */
+    name[i] = ps[i];
+  }
+  return name;
+}

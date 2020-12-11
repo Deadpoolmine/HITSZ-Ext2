@@ -41,6 +41,18 @@ is_empty(){
     return path_stack.top == -1 ? 1 : 0;
 }
 
+char*
+get_current_path(){
+    char *s = " ";
+    for (int i = 0; i <= path_stack.top; i++)
+    {
+        s = join(s, path_stack.stack[i].name);
+        if(i != path_stack.top && i != 0)
+            s = join(s, "/");
+    }
+    return s;
+}
+
 struct dir_item*
 top(int n){
     if(is_empty()){
@@ -69,7 +81,7 @@ push(struct dir_item* dir_item){
         return -1;     
     }
     path_stack.stack[path_stack.top].inode_id = dir_item->inode_id;
-    memcpy(path_stack.stack[path_stack.top].name,dir_item->name, 121);
+    memmove(path_stack.stack[path_stack.top].name, dir_item->name, 121);
     path_stack.stack[path_stack.top].type = dir_item->type;
     path_stack.stack[path_stack.top].valid = dir_item->valid;
     return 0;
@@ -85,6 +97,12 @@ get_last_dir_item(){
     return top(1);
 }
 /********************** Utils *************************/
+void
+sync_super_blk(){
+    disk_write_block(0, (char *)su_blk);
+    disk_write_block(1, (char *)su_blk + DEVICE_BLOCK_SIZE);
+}
+
 uint32
 get_free_block(){
     for (uint32 i = 0; i < 128; i++)
@@ -115,6 +133,9 @@ get_free_inode(){
         }   
     }
 }
+
+
+
 /* 分配一个inode */
 void
 alloc_inode(uint32 inode_num){
@@ -123,6 +144,7 @@ alloc_inode(uint32 inode_num){
     uint32 mask = 1 << off;
     su_blk->inode_map[index] |= mask;
     su_blk->free_inode_count--;
+    sync_super_blk();
 }
 
 /* 释放一个inode */
@@ -133,6 +155,7 @@ release_inode(uint32 inode_num){
     uint32 mask = 1 << off;
     su_blk->inode_map[index] &= mask;
     su_blk->free_inode_count++;
+    sync_super_blk();
 }
 
 /* 分配一个数据块 */
@@ -143,6 +166,7 @@ alloc_block(uint32 block_num){
     uint32 mask = 1 << off;
     su_blk->block_map[index] |= mask;
     su_blk->free_block_count--;
+    sync_super_blk();
 }
 
 /* 释放一个数据块 */
@@ -153,6 +177,7 @@ rlease_block(uint32 block_num){
     uint32 mask = 1 << off;
     su_blk->block_map[index] &= ~mask;
     su_blk->free_block_count++;
+    sync_super_blk();
 }
 
 /* 数据块相关 */
@@ -200,6 +225,8 @@ write_block(uint32 block_num, char *buf, int sz, int offset){
     disk_write_block(block_num * 2 + 1, old_buf + DEVICE_BLOCK_SIZE);
     return 0;
 }
+
+
 
 /* inode相关 */
 uint32
@@ -283,6 +310,7 @@ read_dir_item(struct inode* dir_node, int blk_index, int off_index){
 struct dir_item*
 lookup_dir_item(struct inode* dir_inode, char *dir_name, int *blk_index, int *blk_off, int footprint ){
     int total_dir_item = dir_inode->size / DIRITEMSZ; 
+    *blk_off = 0;
     for (int i = 0; i < SINGLE + SIGNLELINK; i++)
     {
         if(dir_inode->block_point[i] != INVALID_INODE_POINT){
@@ -301,9 +329,9 @@ lookup_dir_item(struct inode* dir_inode, char *dir_name, int *blk_index, int *bl
                     return dir_item;
                 }
             }
+            *blk_off += dir_item_per_blk * DIRITEMSZ;
             if(is_last){
                 *blk_index = i;
-                *blk_off = dir_item_per_blk * DIRITEMSZ;
             }
         }
     }
@@ -344,13 +372,15 @@ sync_dir_item(struct inode* dir_node, struct dir_item* update_dir_item) {
  * 根据path，找到相应的dir_item
  * ../adadad/adad
  * ./adad/ad
+ * addd/add
+ * 
  * /dad/ad
  * 
  * path: 路径
  * dir_name：如果没有
  * current_dir_item:用于返回找到的dir_item
  * last_dir_item：用于返回dir_item的上一级dir_item
- * is_follow
+ * is_follow：是否跟踪路径
  * 
  * return：
  * 没有找到返回-1，否则返回0
@@ -358,21 +388,44 @@ sync_dir_item(struct inode* dir_node, struct dir_item* update_dir_item) {
 int
 find_dir_item(char *path, char **dir_name, struct dir_item** current_dir_item, struct dir_item** last_dir_item, int is_follow){
     if(strcmp(path, "/") == 0){
+        /* / */
         *current_dir_item = root_dir_item;
         *last_dir_item = root_dir_item;
+        *dir_name = "/";
+        if(is_follow){
+            init_stack();
+            push(root_dir_item);
+        }
         return 0;
     }
     if(path[0] == '.' && path[1] == '.'){
+        /* ../awdawdawd/awdaw */
         *current_dir_item = get_last_dir_item();
+        peek_path(&path);
+        if(is_follow && (memcmp(top(0)->name, "/", sizeof("/")) != 0))
+            pop();
     }
+    else if(path[0] == '/')
+    {
+        /* /dawdawd/awdaw */
+        *current_dir_item = root_dir_item;
+        if(is_follow){
+            init_stack();
+            push(root_dir_item);
+        }
+    }
+    /* ./adad/adad */
     else if(path[0] == '.')
+    {
+        peek_path(&path);
+        *current_dir_item = get_current_dir_item();
+    }
+    /* asdad/adad */
+    else
     {
         *current_dir_item = get_current_dir_item();
     }
-    else
-    {
-        *current_dir_item = root_dir_item;
-    }
+    
     while (*dir_name = peek_path(&path))
     {
         if(strlen(*dir_name) == 0){
@@ -392,8 +445,14 @@ find_dir_item(char *path, char **dir_name, struct dir_item** current_dir_item, s
             printf("find_inode() directory %s is not exist!\n", *dir_name);
             return -1;
         }
+        if(next_dir_item->type == FILE){
+            printf("find_inde() %s is not a directory , stop here!\n", *dir_name);
+            return 0;
+        }
         *last_dir_item = *current_dir_item;
         *current_dir_item = next_dir_item;
+        if(is_follow)
+            push(next_dir_item);
     }
     return 0;
 }
@@ -405,12 +464,20 @@ terminal_fs(){
 
 void
 swith_current_dir(char *path){
-
+    struct dir_item* current_dir_item;
+    struct dir_item* last_dir_item;
+    struct inode* current_inode;
+    char *dir_name;
+    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, 1) < 0){
+        printf("path %s is not a directory", path);
+        return;
+    }
+    char* current_path = get_current_path();
+    printf("switch() %s \n", current_path);
 }
 
 void
 check_dir(char *path){
-
     struct dir_item* current_dir_item;
     struct dir_item* last_dir_item;
     struct inode* current_inode;
@@ -422,6 +489,37 @@ check_dir(char *path){
     /* 查找/表明不查找任何匹配文件 */
     lookup_dir_item(current_inode, "/", &blk_index, &block_off, 1);
     printf("check_dir() blk_index: %d, block_off: %d dir_name: %s\n", blk_index ,block_off, dir_name);
+}
+
+int
+create_file(char *path){
+    struct dir_item* current_dir_item;
+    struct dir_item* last_dir_item;
+    struct inode* current_inode;
+    struct inode* next_inode;
+    char *dir_name;
+    char *file_name = get_file_name(path);
+    printf("path %s \n", path);
+    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, 0) < 0){
+        if(memcmp(dir_name, file_name, strlen(file_name)) != 0){
+            printf("create_dir() directory %s is not exist!\n", dir_name);
+            return -1;    
+        }
+        
+        printf("create_dir() not find path: %s\n", path);
+        printf("create_dir() now we'll create one for you !\n");
+        /* 创建不存在的目录 */
+        struct inode* next_inode = new_inode(FILE);
+        uint32 inode_index = create_inode(next_inode);
+        struct dir_item* dir_item = new_dir_item(FILE, inode_index, dir_name);
+        /* 刷新当前节点 */
+        current_inode = read_inode(current_dir_item->inode_id); 
+        create_dir_item(current_inode, dir_item);
+        sync_inode(current_dir_item->inode_id, current_inode);            
+
+        return 0;
+    }
+    printf("create_file() file %s is already exists !\n", file_name);
 }
 
 struct inode*
@@ -485,6 +583,7 @@ create_dir(char *path){
         sync_inode(root_dir_item->inode_id, root_dir_node);
         printf("sz: %d \n", root_dir_node->size); */
     }
+    sync_super_blk();
     /** test read write inode : success */
     /* struct inode *j;
     j = read_inode(0);
@@ -523,22 +622,23 @@ boot_fs(){
         printf("Now we'll create one for you\n");
 
         su_blk->magic_num = MAGICNUM;
-        su_blk->dir_inode_count = 32 * 32; 
-        su_blk->free_inode_count = 32 * 32;
+        su_blk->dir_inode_count = 0; 
+        su_blk->free_inode_count = 32 * 32; //1024
         su_blk->free_block_count = 128 * 32;
         memset(su_blk->block_map, 0, sizeof(su_blk->block_map));
         memset(su_blk->inode_map, 0, sizeof(su_blk->inode_map));
-        /* 将block 1~32标记为已被inode占用，get_free_block将不再返回它们 */
-        for (int i = 1; i <= 32; i++)
+        /* 数据块0标识superblk，将block 1~32标记为已被inode占用，get_free_block将不再返回它们 */
+        for (int i = 0; i <= 32; i++)
         {
             alloc_block(i);
         }
-        write_block(SUPERBLKLOC, (char *)su_blk, DATABLKSZ, 0);
+        sync_super_blk();
         root_dir_node = create_dir("/");
     }
     /* 下标为0的inode默认为根目录项 */
     root_dir_node = read_inode(0);
     root_dir_item = new_dir_item(DIR, 0, "/");
+    init_stack();
     push(root_dir_item);
     check_dir("/");
     /* current dir应该是dir_item */

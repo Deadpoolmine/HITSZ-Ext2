@@ -100,7 +100,7 @@ exec_cmd(cmd_t cmd){
             if(cmd.args[i][0] != 0)
                 check_dir(cmd.args[i]);
             if(cmd.args[i][0] == 0 && i == 0){
-                check_dir("/");
+                check_dir(".");
             }
         }
         break;
@@ -112,10 +112,25 @@ exec_cmd(cmd_t cmd){
         }
         break;
     case touch:
-
+        for (int i = 0; i < MAXARGS; i++)
+        {
+            if(cmd.args[i][0] != 0)
+                create_file(cmd.args[i]);
+        }
+        
+        break;
+    case cp:
         break;
     case cd:
-        
+        swith_current_dir(cmd.args[0]);
+        break;
+    case shutdown:
+        printf("shut down...welcome next time !\n");
+        sleep(1);
+        exit(0);
+        break;
+    case undefine:
+        printf("undefined command, we'll add that later \n");
         break;
     default:
         break;
@@ -162,9 +177,9 @@ boot_shell(){
     printf("success!\n");
     while (1)
     {
-        struct dir_item* current_dir_item = get_current_dir_item();
+        char* current_dir = get_current_path();
         
-        printf("deadpool&star: %s $ ", current_dir_item->name);
+        printf("deadpool&star: %s $ ", current_dir);
         memset(cmd, 0, MAXCMD);
         if((cmdlen = gets(cmd, MAXCMD)) == 0){
             printf("exit shell!\n");
