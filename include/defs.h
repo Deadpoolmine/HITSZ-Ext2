@@ -25,7 +25,7 @@ char*                       get_file_name(char *path);
 /* ext2.c */
 int                         boot_fs();
 void                        terminal_fs();
-int                         create_file(char *path);
+struct inode*               create_file(char *path);
 struct inode*               create_dir(char *path);
 void                        check_dir(char *path);
 void                        swith_current_dir(char *path);

@@ -249,8 +249,6 @@ sync_inode(uint32 inode_num, struct inode* update_inode){
     int block_num = inode_num / NINODE_PER_BLK + 1; //第几个数据块
     int off_index = inode_num % NINODE_PER_BLK;   //数据块内偏移
     write_block(block_num, (char *)update_inode, INODESZ, off_index * INODESZ);
-    if(update_inode->size == 0)
-        release_inode(inode_num);
 }
 
 struct inode*
@@ -306,6 +304,10 @@ read_dir_item(struct inode* dir_node, int blk_index, int off_index){
  * 在制定inode下寻找dir_item，仅需名字即可
  * 
  * footprint：代表需不需要输出查找过程
+ * 
+ * 
+ * 
+ * 目前暂时不允许文件夹与文件重名
  */
 struct dir_item*
 lookup_dir_item(struct inode* dir_inode, char *dir_name, int *blk_index, int *blk_off, int footprint ){
@@ -340,21 +342,6 @@ lookup_dir_item(struct inode* dir_inode, char *dir_name, int *blk_index, int *bl
 
 int
 sync_dir_item(struct inode* dir_node, struct dir_item* update_dir_item) {
-    /* for (int i = 0; i < SINGLE + SIGNLELINK; i++)
-    {
-        if(dir_node->block_point[i] != INVALID_INODE_POINT){
-            int total_dir_item = dir_node->size / DIRITEMSZ; 
-            for (int j = 0; j < total_dir_item; j++)
-            {
-                struct dir_item* dir_item = read_dir_item(dir_node, i, j);
-                if(strcmp(dir_item->name, update_dir_item->name) == 0){
-                    write_block(dir_node->block_point[i], (char *)update_dir_item, 
-                                                        DIRITEMSZ, j * DIRITEMSZ);
-                    return 0;
-                }
-            }
-        }
-    } */
     int blk_index = 0;
     int block_off = 0;
     if(lookup_dir_item(dir_node, update_dir_item->name,&blk_index, &block_off, 0)){
@@ -445,12 +432,12 @@ find_dir_item(char *path, char **dir_name, struct dir_item** current_dir_item, s
             printf("find_inode() directory %s is not exist!\n", *dir_name);
             return -1;
         }
-        if(next_dir_item->type == FILE){
-            printf("find_inde() %s is not a directory , stop here!\n", *dir_name);
-            return 0;
-        }
         *last_dir_item = *current_dir_item;
         *current_dir_item = next_dir_item;
+        if(next_dir_item->type == FILE){
+            printf("find_inde() %s is a file , stop here!\n", *dir_name);
+            return 0;
+        }
         if(is_follow)
             push(next_dir_item);
     }
@@ -491,7 +478,7 @@ check_dir(char *path){
     printf("check_dir() blk_index: %d, block_off: %d dir_name: %s\n", blk_index ,block_off, dir_name);
 }
 
-int
+struct inode*
 create_file(char *path){
     struct dir_item* current_dir_item;
     struct dir_item* last_dir_item;
@@ -503,7 +490,7 @@ create_file(char *path){
     if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, 0) < 0){
         if(memcmp(dir_name, file_name, strlen(file_name)) != 0){
             printf("create_dir() directory %s is not exist!\n", dir_name);
-            return -1;    
+            return (struct inode*)0;    
         }
         
         printf("create_dir() not find path: %s\n", path);
@@ -517,7 +504,7 @@ create_file(char *path){
         create_dir_item(current_inode, dir_item);
         sync_inode(current_dir_item->inode_id, current_inode);            
 
-        return 0;
+        return next_inode;
     }
     printf("create_file() file %s is already exists !\n", file_name);
 }
@@ -537,7 +524,7 @@ create_dir(char *path){
         create_dir_item(dir_node, current_dir_item);
         create_dir_item(dir_node, last_dir_item);
         create_inode(dir_node);
-
+        sync_super_blk();
         return dir_node;
     }
     /* 非根目录 */
@@ -575,15 +562,11 @@ create_dir(char *path){
             sync_inode(current_dir_item->inode_id, current_inode);            
 
             next_inode = create_dir(path);
+            sync_super_blk();
             return next_inode;
         }
-        
-        /* struct dir_item* dir_item = new_dir_item(DIR, 0, "test.c");
-        create_dir_item(root_dir_node, dir_item);
-        sync_inode(root_dir_item->inode_id, root_dir_node);
-        printf("sz: %d \n", root_dir_node->size); */
     }
-    sync_super_blk();
+    
     /** test read write inode : success */
     /* struct inode *j;
     j = read_inode(0);
@@ -593,7 +576,51 @@ create_dir(char *path){
     j = read_inode(1);
     printf("create_dir() dir_node.type: %d, link: %d \n", j->file_type, j->link); */
 }
+int                         
+copy_to(char *from_path, char *to_path){
+    
+    struct dir_item* from_current_dir_item;
+    struct dir_item* from_last_dir_item;
+    struct inode* from_current_inode;
+    
+    struct dir_item* to_current_dir_item;
+    struct dir_item* to_last_dir_item;
+    struct inode* to_current_inode;
 
+    char *from_dir_name;
+    char *to_dir_name;
+
+    printf("from_path %s , to_path %s\n", from_path, to_path);
+
+    if(find_dir_item(from_path, &from_dir_name, &from_current_dir_item, &from_last_dir_item, 0) < 0){
+        printf("copy_to() source file not exist!\n");
+        return -1;
+    }
+    if(find_dir_item(to_path, &to_dir_name, &to_current_dir_item, &to_last_dir_item, 0) == 0){
+        printf("copy_to() dest file exists!\n");
+        return -1;
+    }
+    from_current_inode = read_inode(from_current_dir_item->inode_id);
+    to_current_inode = create_file(to_path);
+    if(!to_current_inode){
+        printf("copy_to() dest directory not exists!\n");
+        return -1;
+    }
+    find_dir_item(to_path, &to_dir_name, &to_current_dir_item, &to_last_dir_item, 0);
+    for (int i = 0; i < SINGLE + SIGNLELINK; i++)
+    {
+        uint32 origin_block_num = from_current_inode->block_point[i];
+        if(origin_block_num != INVALID_INODE_POINT){
+            uint32 block_num = get_free_block();
+            to_current_inode->block_point[i] = block_num;
+            char *buf = read_block(origin_block_num);
+            write_block(block_num, buf, DATABLKSZ, 0);
+        }
+    }
+    //sync_dir_item(to_current_dir_item,)
+    sync_inode(to_current_dir_item->inode_id, to_current_inode);
+    return 0;
+}
 
 
 

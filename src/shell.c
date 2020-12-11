@@ -120,6 +120,7 @@ exec_cmd(cmd_t cmd){
         
         break;
     case cp:
+        copy_to(cmd.args[0], cmd.args[1]);
         break;
     case cd:
         swith_current_dir(cmd.args[0]);
