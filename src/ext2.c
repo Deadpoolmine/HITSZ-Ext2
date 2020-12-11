@@ -323,7 +323,7 @@ lookup_dir_item(struct inode* dir_inode, char *dir_name, int *blk_index, int *bl
             {
                 struct dir_item* dir_item = read_dir_item(dir_inode, i, j);
                 if(dir_item->valid && footprint){
-                    printf("%s %s\n", dir_item->name, dir_item->type == FILE ? "FILE" : "DIR");
+                    printf("%s %s\n", dir_item->name, dir_item->type == FILE ? "\e[35;1mFILE\e[0m" : "\e[36;1mDIR\e[0m");
                 }
                 if(strcmp(dir_item->name,dir_name) == 0){
                     *blk_index = i;
@@ -459,6 +459,8 @@ swith_current_dir(char *path){
         printf("path %s is not a directory", path);
         return;
     }
+    if(current_dir_item->type == FILE)
+        printf("\e[35m%s\e[0m \e[31mis not a directory \e[0m\n", path);
     char* current_path = get_current_path();
     printf("switch() %s \n", current_path);
 }
@@ -473,7 +475,7 @@ check_dir(char *path){
     current_inode = read_inode(current_dir_item->inode_id);
     int blk_index = 0;
     int block_off = 0;
-    /* 查找/表明不查找任何匹配文件 */
+    /* 查找 "/" 表明不查找任何匹配文件 */
     lookup_dir_item(current_inode, "/", &blk_index, &block_off, 1);
     printf("check_dir() blk_index: %d, block_off: %d dir_name: %s\n", blk_index ,block_off, dir_name);
 }
@@ -549,7 +551,13 @@ create_dir(char *path){
             printf("create_dir() not find path: %s\n", path);
             printf("create_dir() now we'll create one for you !\n");
 
-            /* 创建不存在的目录 */
+            /**
+             *  
+             * 创建不存在的目录
+             * 
+             * dir_item -> block -> dir .
+             *                   -> dir ..
+             * */
             struct inode* next_inode = new_inode(DIR);
             uint32 inode_index = create_inode(next_inode);
             struct dir_item* dir_item = new_dir_item(DIR, inode_index, dir_name);
@@ -557,6 +565,11 @@ create_dir(char *path){
             create_dir_item(next_inode, new_dir_item(DIR, current_dir_item->inode_id, ".."));
             sync_inode(dir_item->inode_id, next_inode);
             /* 刷新当前节点 */
+            /**
+             * 刷新current_inode即可
+             * current_dir_item -> current_inode -> dir_item -> next_inode -> dir .
+             *                                                             -> dir ..
+             */
             current_inode = read_inode(current_dir_item->inode_id); 
             create_dir_item(current_inode, dir_item);
             sync_inode(current_dir_item->inode_id, current_inode);            

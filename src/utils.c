@@ -76,6 +76,10 @@ get_file_name(char *path){
     if(path[i] != '/'){
       ps--;
     }
+    else
+    {
+      break;
+    }
   }
   int name_len = es - ps;
   
