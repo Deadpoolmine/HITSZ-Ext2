@@ -43,7 +43,7 @@ is_empty(){
 
 char*
 get_current_path(){
-    char *s = " ";
+    char *s = "";
     for (int i = 0; i <= path_stack.top; i++)
     {
         s = join(s, path_stack.stack[i].name);

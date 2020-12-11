@@ -126,12 +126,12 @@ exec_cmd(cmd_t cmd){
         swith_current_dir(cmd.args[0]);
         break;
     case shutdown:
-        printf("shut down...welcome next time !\n");
+        printf("\e[32;1mshut down...welcome next time !\n");
         sleep(1);
         exit(0);
         break;
     case undefine:
-        printf("undefined command, we'll add that later \n");
+        printf("\e[32;1mundefined command, we'll add that later \n");
         break;
     default:
         break;
@@ -180,7 +180,7 @@ boot_shell(){
     {
         char* current_dir = get_current_path();
         
-        printf("deadpool&star: %s $ ", current_dir);
+        printf("\e[31;1mdeadpool&star:\e[0m\e[34;1m~%s\e[0m$ ", current_dir);
         memset(cmd, 0, MAXCMD);
         if((cmdlen = gets(cmd, MAXCMD)) == 0){
             printf("exit shell!\n");

@@ -30,4 +30,4 @@ struct inode*               create_dir(char *path);
 void                        check_dir(char *path);
 void                        swith_current_dir(char *path);
 int                         copy_to(char *from_path, char *to_path);
-char *                      get_current_path();
+char*                       get_current_path();
