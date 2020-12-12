@@ -8,6 +8,7 @@ CMakeFiles/main.dir/src/ext2.c.o: ../include/defs.h
 CMakeFiles/main.dir/src/ext2.c.o: ../include/disk.h
 CMakeFiles/main.dir/src/ext2.c.o: ../include/ext2.h
 CMakeFiles/main.dir/src/ext2.c.o: ../include/filetype.h
+CMakeFiles/main.dir/src/ext2.c.o: ../include/flags.h
 CMakeFiles/main.dir/src/ext2.c.o: ../include/params.h
 CMakeFiles/main.dir/src/ext2.c.o: ../include/types.h
 CMakeFiles/main.dir/src/ext2.c.o: ../src/ext2.c

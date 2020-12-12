@@ -4,6 +4,12 @@
 
 > Create in 2020-12-11
 
+
+## Log
+
+### 2020-12-12
+- 实现动态分配inode
+
 ## Support
 
 - cp

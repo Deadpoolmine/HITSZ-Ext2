@@ -9,6 +9,7 @@ struct super_block {
     int32 dir_inode_count;            // 目录inode数
     uint32 block_map[128];            // 数据块占用位图，共128 * 32 = 4K个数据块
     uint32 inode_map[32];             // inode占用位图 32 * 32 = 1024个inode节点，与inode共占1k * 32B = 32KB
+    uint32 inode_block_map[32];
 };
 
 #define SINGLE 5

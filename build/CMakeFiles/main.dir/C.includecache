@@ -30,6 +30,8 @@ params.h
 
 ../include/filetype.h
 
+../include/flags.h
+
 ../include/params.h
 
 ../include/types.h
@@ -41,4 +43,6 @@ params.h
 /home/deadpool/Desktop/Programming/FileSystem/src/params.h
 filetype.h
 /home/deadpool/Desktop/Programming/FileSystem/src/filetype.h
+flags.h
+/home/deadpool/Desktop/Programming/FileSystem/src/flags.h
 

@@ -12,4 +12,6 @@
 #define NINODE_PER_BLK 32
 #define NDIRITEM_PER_BLK 8
 
-#define INVALID_INODE_POINT ((uint32)0)
+
+
+

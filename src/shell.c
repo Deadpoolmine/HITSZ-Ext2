@@ -10,6 +10,8 @@ typedef enum op{
     touch,
     cp,
     cd,
+    tee,
+    cat,
     shutdown,
     undefine
 } op_t;
@@ -73,6 +75,14 @@ translate_op(char *token){
     {
         op = cd;
     }
+    else if (!strcmp(token, "tee"))
+    {
+        op = tee;
+    }
+    else if (!strcmp(token, "cat"))
+    {
+        op = cat;
+    }
     else if (!strcmp(token, "shutdown"))
     {
         op = shutdown;
@@ -117,13 +127,28 @@ exec_cmd(cmd_t cmd){
             if(cmd.args[i][0] != 0)
                 create_file(cmd.args[i]);
         }
-        
         break;
     case cp:
         copy_to(cmd.args[0], cmd.args[1]);
         break;
     case cd:
         swith_current_dir(cmd.args[0]);
+        break;
+    case tee:
+        for (int i = 0; i < MAXARGS; i++)
+        {
+            if(cmd.args[i][0] != 0)
+                write_file(cmd.args[i]);
+        }
+        break;
+    case cat:
+        for (int i = 0; i < MAXARGS; i++)
+        {
+            if(cmd.args[i][0] != 0){
+                char *contents = read_file(cmd.args[i]);
+                printf("\e[32;1m%s\e[0;1m",contents);
+            }
+        }
         break;
     case shutdown:
         printf("\e[32;1mshut down...welcome next time !\n");
@@ -183,8 +208,8 @@ boot_shell(){
         printf("\e[31;1mdeadpool&star:\e[0m\e[34;1m~%s\e[0m$ ", current_dir);
         memset(cmd, 0, MAXCMD);
         if((cmdlen = gets(cmd, MAXCMD)) == 0){
-            printf("exit shell!\n");
-            break;
+            //printf("exit shell!\n");
+            //break;
         }
         parse_cmd(cmd, cmdlen);
         printf("\n");
