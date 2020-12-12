@@ -32,4 +32,5 @@ void                        swith_current_dir(char *path);
 int                         copy_to(char *from_path, char *to_path);
 char*                       read_file(char *path);
 void                        write_file(char *path);
+void                        observe_fs_structure(char *path, int level);
 char*                       get_current_path();

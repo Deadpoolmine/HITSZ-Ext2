@@ -6,6 +6,7 @@ char whitespace[] = " \t\r\n\v";
 
 typedef enum op{
     ls,
+    stru,
     mkdir,
     touch,
     cp,
@@ -58,6 +59,10 @@ translate_op(char *token){
     op_t op = undefine;
     if(!strcmp(token, "ls")){
         op = ls;
+    }
+    else if (!strcmp(token, "stru"))
+    {
+        op = stru;
     }
     else if (!strcmp(token, "mkdir"))
     {
@@ -113,6 +118,12 @@ exec_cmd(cmd_t cmd){
                 check_dir(".");
             }
         }
+        break;
+    case stru:
+        if(cmd.args[0][0] == 0)
+            observe_fs_structure(".", 0);
+        else
+            observe_fs_structure(cmd.args[0], 0);
         break;
     case mkdir:
         for (int i = 0; i < MAXARGS; i++)

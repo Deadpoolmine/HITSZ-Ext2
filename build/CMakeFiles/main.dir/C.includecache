@@ -28,21 +28,13 @@ types.h
 params.h
 ../include/params.h
 
-../include/filetype.h
-
-../include/flags.h
-
 ../include/params.h
 
 ../include/types.h
 
-/home/deadpool/Desktop/Programming/FileSystem/src/ext2.c
+/home/deadpool/Desktop/Programming/FileSystem/src/shell.c
 defs.h
 /home/deadpool/Desktop/Programming/FileSystem/src/defs.h
 params.h
 /home/deadpool/Desktop/Programming/FileSystem/src/params.h
-filetype.h
-/home/deadpool/Desktop/Programming/FileSystem/src/filetype.h
-flags.h
-/home/deadpool/Desktop/Programming/FileSystem/src/flags.h
 

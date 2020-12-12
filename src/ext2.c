@@ -307,11 +307,10 @@ read_dir_item(struct inode* dir_node, int blk_index, int off_index){
 
 /**
  * 
- * 在制定inode下寻找dir_item，仅需名字即可
+ * 在指定inode下寻找dir_item，仅需名字即可
  * 
  * footprint：代表需不需要输出查找过程
- * 
- * 
+ * 如果footprint非0，则1代表打印信息前不输出Tab，2代表输出一个Tab，以此类推
  * 
  * 目前暂时不允许文件夹与文件重名
  */
@@ -329,6 +328,10 @@ lookup_dir_item(struct inode* dir_inode, char *dir_name, int *blk_index, int *bl
             {
                 struct dir_item* dir_item = read_dir_item(dir_inode, i, j);
                 if(dir_item->valid && footprint){
+                    for (int i = 1; i < footprint; i++)
+                    {
+                        printf("    ");
+                    }
                     printf("%s %s\n", dir_item->name, dir_item->type == FILE ? "\e[35;1mFILE\e[0m" : "\e[36;1mDIR\e[0m");
                 }
                 if(strcmp(dir_item->name,dir_name) == 0){
@@ -364,14 +367,14 @@ sync_dir_item(struct inode* dir_node, struct dir_item* update_dir_item) {
  * 
  */
 void
-write_inode_block(struct inode* dest_inode, char *buf, int blk_index){
+write_inode_block(struct inode* dest_inode, char *buf, int sz, int blk_offset,int blk_index){
     uint32 block_num;
     if(dest_inode->block_point[blk_index] == INVALID_INODE_POINT)
         block_num = get_free_block();
     else
         block_num = dest_inode->block_point[blk_index];
     dest_inode->block_point[blk_index] = block_num;
-    write_block(block_num, buf, DATABLKSZ, 0);
+    write_block(block_num, buf, sz, blk_offset);
 }
 
 /**
@@ -437,7 +440,7 @@ find_dir_item(char *path, char **dir_name, struct dir_item** current_dir_item, s
         if(strlen(*dir_name) == 0){
             break;
         }
-        printf("find_dir_item() path %s, dirname %s , len %ld\n", path, *dir_name, strlen(*dir_name));
+        //printf("find_dir_item() path %s, dirname %s , len %ld\n", path, *dir_name, strlen(*dir_name));
         int blk_index = 0;
         int block_off = 0;
         struct inode* current_dir_node = read_inode((*current_dir_item)->inode_id);
@@ -484,6 +487,7 @@ swith_current_dir(char *path){
     char* current_path = get_current_path();
     printf("switch() %s \n", current_path);
 }
+
 /********************** ls related *************************/
 void
 check_dir(char *path){
@@ -498,6 +502,45 @@ check_dir(char *path){
     /* 查找 "/" 表明不查找任何匹配文件 */
     lookup_dir_item(current_inode, "/", &blk_index, &block_off, FOOT_PRINT);
     printf("check_dir() blk_index: %d, block_off: %d dir_name: %s\n", blk_index ,block_off, dir_name);
+}
+/********************** lsall related *************************/
+void
+observe_fs_structure(char *path, int level){
+    struct dir_item* current_dir_item;
+    struct dir_item* last_dir_item;
+    struct inode* current_inode;
+    char *dir_name;
+    find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW);
+    current_inode = read_inode(current_dir_item->inode_id);
+    int total_dir_item = current_inode->size / DIRITEMSZ;
+    for (int i = 0; i < SINGLE + SIGNLELINK; i++)
+    {
+        if(current_inode->block_point[i] != INVALID_INODE_POINT){
+            total_dir_item -= NDIRITEM_PER_BLK;
+            int dir_item_per_blk = total_dir_item >= 0 ? NDIRITEM_PER_BLK : total_dir_item + NDIRITEM_PER_BLK;
+            for (int j = 0; j < dir_item_per_blk; j++)
+            {
+                struct dir_item* dir_item = read_dir_item(current_inode, i, j);
+                for (int i = 0; i < level; i++)
+                {
+                    printf("    ");
+                }
+                if(dir_item->type == FILE){
+                    printf("%s %s\n", dir_item->name, "\e[35;1mFILE\e[0m");
+                }
+                else if(dir_item->type == DIR)
+                {
+                    printf("%s %s\n", dir_item->name, "\e[36;1mDIR\e[0m");
+                    char *new_path = memcmp(path, "/", sizeof("/")) == 0 ? path : join(path, "/");
+                    new_path = join(new_path, dir_item->name);
+                    if(memcmp(dir_item->name, ".", sizeof(".")) != 0 && 
+                                memcmp(dir_item->name, "..", sizeof("..")) != 0)
+                        observe_fs_structure(new_path, level+1);
+                }
+            }
+        }
+    }
+    
 }
 /********************** touch related *************************/
 struct inode*
@@ -611,6 +654,34 @@ create_dir(char *path){
     printf("create_dir() dir_node.type: %d, link: %d \n", j->file_type, j->link); */
 }
 /********************** cp related *************************/
+
+/** 判断path1和path2对应的是否是同一个文件 */
+int
+check_path_same(char *path1, char *path2){
+    struct dir_item* current_dir_item1;
+    struct dir_item* last_dir_item1;
+    
+    struct dir_item* current_dir_item2;
+    struct dir_item* last_dir_item2;
+
+    char *dir_name1;
+    char *dir_name2;
+
+    find_dir_item(path1, &dir_name1, &current_dir_item1, &last_dir_item1, NOT_FOLLOW);
+    find_dir_item(path2, &dir_name2, &current_dir_item2, &last_dir_item2, NOT_FOLLOW);
+    if(strcmp(dir_name1, dir_name2) != 0)
+        return 0;
+    if(current_dir_item1->inode_id != current_dir_item2->inode_id)
+        return 0;
+    if(strcmp(current_dir_item1->name, current_dir_item2->name) != 0)
+        return 0;
+    if(current_dir_item1->type != current_dir_item2->type)
+        return 0;
+    if(current_dir_item1->valid != current_dir_item2->valid)
+        return 0;
+    return 1;
+}
+
 int
 copy_file(char *from_file_path, char *to_file_path){
     struct dir_item* from_current_dir_item;
@@ -654,14 +725,16 @@ copy_file(char *from_file_path, char *to_file_path){
 }
 
 int
-copy_directory(char *from_dir_path, char *to_dir_path){
+copy_directory(char *from_dir_path, char *to_dir_path, int is_init, char *origin_to_dir_path){
     struct dir_item* from_current_dir_item;
     struct dir_item* from_last_dir_item;
     struct dir_item* to_current_dir_item;
     struct dir_item* to_last_dir_item;
     char *from_dir_name;
     char *to_dir_name;
-
+    if(is_init){
+        origin_to_dir_path = to_dir_path;
+    }
     
     if(find_dir_item(to_dir_path, &to_dir_name, &to_current_dir_item, &to_last_dir_item, NOT_FOLLOW) == 0){
         printf("copy_directory() dest directory exists!\n");
@@ -681,16 +754,19 @@ copy_directory(char *from_dir_path, char *to_dir_path){
             for (int j = 0; j < dir_item_per_blk; j++)
             {
                 struct dir_item* dir_item = read_dir_item(src_dir_node, i, j);
-                char *src_path = join(from_dir_path, "/");
+                char *src_path = memcmp(from_dir_name, "/", sizeof("/")) == 0 ? 
+                                            from_dir_path : join(from_dir_path, "/");
                 src_path = join(src_path, dir_item->name);
-
+                /* 保证不重复复制同一个文件 */
+                if(check_path_same(src_path, origin_to_dir_path))
+                    continue;
                 char *dest_path = join(to_dir_path, "/");
                 dest_path = join(dest_path, dir_item->name);
                 if(dir_item->type == FILE){
                     copy_file(src_path, dest_path);
                 }
                 else if(dir_item->type == DIR){
-                    copy_directory(src_path, dest_path);
+                    copy_directory(src_path, dest_path, 0, origin_to_dir_path);
                 }
             }
         }
@@ -715,7 +791,7 @@ copy_to(char *from_path, char *to_path){
     }
     else if(from_current_dir_item->type == DIR)
     {
-        copy_directory(from_path, to_path);
+        copy_directory(from_path, to_path, 1, NULL);
     }
     return 0;
 }
@@ -772,23 +848,30 @@ write_file(char *path){
     current_inode = read_inode(current_dir_item->inode_id);
     for (int i = 0; i < SINGLE + SIGNLELINK; i++)
     {
-        write_inode_block(current_inode, "", i);
+        current_inode->block_point[i] = INVALID_INODE_POINT;
     }
     char buf[DATABLKSZ];
     memset(buf, 0, DATABLKSZ);
     char c;
-    int blk_index = 0; 
-    int len = 0;
-    int total_len = 0;
+    int len = 0, total_len = 0, blk_index = 0;
     while (1)
     {
         memset(buf, 0, DATABLKSZ);
         fgets(buf,DATABLKSZ,stdin);
+        int blk_index = total_len / DATABLKSZ;
+        int offset = total_len % DATABLKSZ;
         len = strlen(buf);
         total_len += len;
-        write_inode_block(current_inode, buf, blk_index);
-        if(total_len == DATABLKSZ)
+        int sz = len, left_sz = -1;
+        if(offset + len > DATABLKSZ){
+            left_sz = offset + len - DATABLKSZ;
+            sz -= left_sz;
+        }
+        write_inode_block(current_inode, buf, sz, offset, blk_index);
+        if(total_len % DATABLKSZ == 0)
             blk_index++;
+        if(left_sz != -1)
+            write_inode_block(current_inode, buf, left_sz, 0, blk_index);
         if(len == 1){
             break;
         }
