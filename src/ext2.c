@@ -675,7 +675,63 @@ create_file(char *path){
 
 /********************** mkdir related *************************/
 struct inode*
+recurse_create_dir(char *path){
+    /**
+     * TODO
+     * 
+     * 基本逻辑：
+     * 找到上一级dir_item，顺便找到它的inode，为其创建dir_item，
+     * 
+     * 记得每次更新 inode 和 
+     */
+    /* 测试，创建一个DIR */
+    struct dir_item* current_dir_item;
+    struct dir_item* last_dir_item;
+    struct inode* current_inode;
+    struct inode* next_inode;
+    char *dir_name;
+    #ifdef DEBUG
+        printf("path %s \n", path);
+    #endif // DEBUG
+    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW) < 0){
+        #ifdef DEBUG
+            printf("create_dir() not find path: %s\n", path);
+            printf("create_dir() now we'll create one for you !\n");
+        #endif // DEBUG
+        /**
+         *  
+         * 创建不存在的目录
+         * 
+         * dir_item -> block -> dir .
+         *                   -> dir ..
+         * */
+        struct inode* next_inode = new_inode(DIR);
+        uint32 inode_index = create_inode(next_inode);
+        struct dir_item* dir_item = new_dir_item(DIR, inode_index, dir_name);
+        create_dir_item(next_inode, new_dir_item(DIR, dir_item->inode_id, "."));
+        create_dir_item(next_inode, new_dir_item(DIR, current_dir_item->inode_id, ".."));
+        sync_inode(dir_item->inode_id, next_inode);
+        /* 刷新当前节点 */
+        /**
+         * 刷新current_inode即可
+         * current_dir_item -> current_inode -> dir_item -> next_inode -> dir .
+         *                                                             -> dir ..
+         */
+        current_inode = read_inode(current_dir_item->inode_id); 
+        create_dir_item(current_inode, dir_item);
+        sync_inode(current_dir_item->inode_id, current_inode);            
+
+        next_inode = recurse_create_dir(path);
+        sync_super_blk();
+        return next_inode;
+    }
+    
+}
+struct inode*
 create_dir(char *path){
+    struct dir_item* current_dir_item;
+    struct dir_item* last_dir_item;
+    char *dir_name;
     su_blk->dir_inode_count++;
     /* 根目录 */
     if(strcmp(path, "/") == 0){
@@ -692,60 +748,17 @@ create_dir(char *path){
         sync_super_blk();
         return dir_node;
     }
+    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW) == 0){
+        raise_path_exist("mkdir", path);
+        return read_inode(current_dir_item->inode_id);
+    }
     /* 非根目录 */
     else
-    {
-        /**
-         * TODO
-         * 
-         * 基本逻辑：
-         * 找到上一级dir_item，顺便找到它的inode，为其创建dir_item，
-         * 
-         * 记得每次更新 inode 和 
-         */
-        /* 测试，创建一个DIR */
-        struct dir_item* current_dir_item;
-        struct dir_item* last_dir_item;
-        struct inode* current_inode;
-        struct inode* next_inode;
-        char *dir_name;
-        #ifdef DEBUG
-            printf("path %s \n", path);
-        #endif // DEBUG
-        if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW) < 0){
-            #ifdef DEBUG
-                printf("create_dir() not find path: %s\n", path);
-                printf("create_dir() now we'll create one for you !\n");
-            #endif // DEBUG
-            /**
-             *  
-             * 创建不存在的目录
-             * 
-             * dir_item -> block -> dir .
-             *                   -> dir ..
-             * */
-            struct inode* next_inode = new_inode(DIR);
-            uint32 inode_index = create_inode(next_inode);
-            struct dir_item* dir_item = new_dir_item(DIR, inode_index, dir_name);
-            create_dir_item(next_inode, new_dir_item(DIR, dir_item->inode_id, "."));
-            create_dir_item(next_inode, new_dir_item(DIR, current_dir_item->inode_id, ".."));
-            sync_inode(dir_item->inode_id, next_inode);
-            /* 刷新当前节点 */
-            /**
-             * 刷新current_inode即可
-             * current_dir_item -> current_inode -> dir_item -> next_inode -> dir .
-             *                                                             -> dir ..
-             */
-            current_inode = read_inode(current_dir_item->inode_id); 
-            create_dir_item(current_inode, dir_item);
-            sync_inode(current_dir_item->inode_id, current_inode);            
-
-            next_inode = create_dir(path);
-            sync_super_blk();
-            return next_inode;
-        }
+    {   
+        return recurse_create_dir(path);
     }
 }
+
 /********************** cp related *************************/
 
 /** 判断path1和path2对应的是否是同一个文件/目录 */
@@ -879,6 +892,10 @@ int
 copy_to(char *from_path, char *to_path){
     /* 判断源类型 */
     int path_type = judge_path_type(from_path);
+    if(path_type < 0){
+        raise_path_not_exist("cp", from_path);
+        return -1;
+    }
     if(path_type == FILE){
         copy_file(from_path, to_path);
     }
@@ -930,7 +947,7 @@ write_file(char *path){
     if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW) < 0){
         /* printf("write_file() source file not exist!\n");
         printf("\e[35mcp: source file is not exist\e[0m\n"); */
-        raise_path_not_exist("cp", path);
+        raise_path_not_exist("tee", path);
         return;
     }
     if(current_dir_item->type == DIR){
@@ -1025,8 +1042,8 @@ remove_directory(char *path){
         raise_path_not_exist("rm", path);
         return -1;
     }
-    last_inode = read_inode(last_dir_item->inode_id);
     current_dir_item->valid = 0;
+    last_inode = read_inode(last_dir_item->inode_id);
     current_inode = read_inode(current_dir_item->inode_id);
     int total_dir_item = current_inode->size / DIRITEMSZ;
     /* 遍历源目录，调用copy file和递归调用copy directory */
@@ -1038,13 +1055,13 @@ remove_directory(char *path){
             for (int j = 0; j < dir_item_per_blk; j++)
             {
                 struct dir_item* dir_item = read_dir_item(current_inode, i, j);
-                if(!strcmp(dir_item->name, ".") || !strcmp(dir_item->name, "..")){
-                    remove_file(path);
-                    continue;
-                }
                 char *src_path;
                 src_path = join(path, "/");
                 src_path = join(src_path, dir_item->name);
+                if(!strcmp(dir_item->name, ".") || !strcmp(dir_item->name, "..")){
+                    remove_file(src_path);
+                    continue;
+                }
                 if(dir_item->type == FILE){
                     remove_file(src_path);
                 }
