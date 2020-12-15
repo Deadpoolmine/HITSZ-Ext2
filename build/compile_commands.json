@@ -16,6 +16,16 @@
 },
 {
   "directory": "/home/deadpool/Desktop/Programming/FileSystem/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-9  -I/home/deadpool/Desktop/Programming/FileSystem/./include  -g   -o CMakeFiles/main.dir/src/printer.c.o   -c /home/deadpool/Desktop/Programming/FileSystem/src/printer.c",
+  "file": "/home/deadpool/Desktop/Programming/FileSystem/src/printer.c"
+},
+{
+  "directory": "/home/deadpool/Desktop/Programming/FileSystem/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-9  -I/home/deadpool/Desktop/Programming/FileSystem/./include  -g   -o CMakeFiles/main.dir/src/raise.c.o   -c /home/deadpool/Desktop/Programming/FileSystem/src/raise.c",
+  "file": "/home/deadpool/Desktop/Programming/FileSystem/src/raise.c"
+},
+{
+  "directory": "/home/deadpool/Desktop/Programming/FileSystem/build",
   "command": "/bin/x86_64-linux-gnu-gcc-9  -I/home/deadpool/Desktop/Programming/FileSystem/./include  -g   -o CMakeFiles/main.dir/src/shell.c.o   -c /home/deadpool/Desktop/Programming/FileSystem/src/shell.c",
   "file": "/home/deadpool/Desktop/Programming/FileSystem/src/shell.c"
 },

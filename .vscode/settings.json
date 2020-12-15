@@ -4,6 +4,7 @@
         "cstdio": "c",
         "*.tcc": "c",
         "limits": "c",
-        "type_traits": "cpp"
+        "type_traits": "cpp",
+        "typeinfo": "c"
     }
 }

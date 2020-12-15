@@ -20,6 +20,22 @@ CMakeFiles/main.dir/src/main.c.o: ../include/params.h
 CMakeFiles/main.dir/src/main.c.o: ../include/types.h
 CMakeFiles/main.dir/src/main.c.o: ../src/main.c
 
+CMakeFiles/main.dir/src/printer.c.o: ../include/defs.h
+CMakeFiles/main.dir/src/printer.c.o: ../include/disk.h
+CMakeFiles/main.dir/src/printer.c.o: ../include/ext2.h
+CMakeFiles/main.dir/src/printer.c.o: ../include/filetype.h
+CMakeFiles/main.dir/src/printer.c.o: ../include/params.h
+CMakeFiles/main.dir/src/printer.c.o: ../include/types.h
+CMakeFiles/main.dir/src/printer.c.o: ../src/printer.c
+
+CMakeFiles/main.dir/src/raise.c.o: ../include/defs.h
+CMakeFiles/main.dir/src/raise.c.o: ../include/disk.h
+CMakeFiles/main.dir/src/raise.c.o: ../include/ext2.h
+CMakeFiles/main.dir/src/raise.c.o: ../include/filetype.h
+CMakeFiles/main.dir/src/raise.c.o: ../include/params.h
+CMakeFiles/main.dir/src/raise.c.o: ../include/types.h
+CMakeFiles/main.dir/src/raise.c.o: ../src/raise.c
+
 CMakeFiles/main.dir/src/shell.c.o: ../include/defs.h
 CMakeFiles/main.dir/src/shell.c.o: ../include/disk.h
 CMakeFiles/main.dir/src/shell.c.o: ../include/ext2.h

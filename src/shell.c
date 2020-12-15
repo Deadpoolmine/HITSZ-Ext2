@@ -13,6 +13,8 @@ typedef enum op{
     cd,
     tee,
     cat,
+    rm,
+    mv,
     shutdown,
     undefine
 } op_t;
@@ -88,6 +90,14 @@ translate_op(char *token){
     {
         op = cat;
     }
+    else if (!strcmp(token, "rm"))
+    {
+        op = rm;
+    }
+    else if (!strcmp(token, "mv"))
+    {
+        op = mv;
+    }
     else if (!strcmp(token, "shutdown"))
     {
         op = shutdown;
@@ -119,12 +129,20 @@ exec_cmd(cmd_t cmd){
             }
         }
         break;
-    case stru:
-        if(cmd.args[0][0] == 0)
-            observe_fs_structure(".", 0);
+    case stru:{
+        int is_show_detail = 0;
+        for (int i = 0; i < MAXARGS; i++)
+        {
+            if(memcmp(cmd.args[i], "-a", sizeof("-a")) == 0){
+                is_show_detail = 1;
+            }   
+        }
+        if(cmd.args[0][0] == 0 || !memcmp(cmd.args[0], "-a", sizeof("-a")))
+            observe_fs_structure(".", 0, is_show_detail);
         else
-            observe_fs_structure(cmd.args[0], 0);
+            observe_fs_structure(cmd.args[0], 0, is_show_detail);
         break;
+    }   
     case mkdir:
         for (int i = 0; i < MAXARGS; i++)
         {
@@ -158,16 +176,30 @@ exec_cmd(cmd_t cmd){
             if(cmd.args[i][0] != 0){
                 char *contents = read_file(cmd.args[i]);
                 printf("\e[32;1m%s\e[0;1m",contents);
+                //print_command_info("cat", contents);
             }
         }
         break;
+    case rm:
+        for (int i = 0; i < MAXARGS; i++)
+        {
+            if(cmd.args[i][0] != 0){
+                remove_path(cmd.args[i]);
+            }
+        }
+        break;
+    case mv:
+        move_to(cmd.args[0], cmd.args[1]);
+        break;
     case shutdown:
-        printf("\e[32;1mshut down...welcome next time !\n");
+        //printf("\e[32;1mshut down...welcome next time !\n");
+        print_command_info("shutdown", "shut down...welcome next time !");
         sleep(1);
         exit(0);
         break;
     case undefine:
-        printf("\e[32;1mundefined command, we'll add that later \n");
+        //printf("\e[32;1mundefined command, we'll add that later \n");
+        raise_common_error("command :","undefined command, we'll add that later");
         break;
     default:
         break;
@@ -176,7 +208,9 @@ exec_cmd(cmd_t cmd){
 
 void 
 parse_cmd(char *cmd, int cmdlen){
-    printf("parse_cmd(): %s \n", cmd);
+    #ifdef DEBUG
+        printf("parse_cmd(): %s \n", cmd);
+    #endif // DEBUG
     int startpos = 0;
     int count = 0;
     cmd_t *_cmd = (cmd_t *)malloc(sizeof(cmd_t));
@@ -199,7 +233,9 @@ parse_cmd(char *cmd, int cmdlen){
             if(strlen(token) != 0)
                 memmove(_cmd->args[count - 2], token, strlen(token));
         }
-        printf("parse_cmd(): get token: %s, length: %ld\n", token, strlen(token));
+        #ifdef DEBUG
+            printf("parse_cmd(): get token: %s, length: %ld\n", token, strlen(token));
+        #endif // DEBUG
     }
     exec_cmd(*_cmd);
 }
@@ -221,6 +257,7 @@ boot_shell(){
         if((cmdlen = gets(cmd, MAXCMD)) == 0){
             //printf("exit shell!\n");
             //break;
+            continue;
         }
         parse_cmd(cmd, cmdlen);
         printf("\n");

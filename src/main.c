@@ -5,7 +5,7 @@
 int 
 main(int argc, char const *argv[])
 {
-    printf("Hello Cmake!\n"); 
+    //printf("Hello Cmake!\n"); 
     if(boot_fs() < 0){
         printf("file system boot fail!\n");
         goto end;

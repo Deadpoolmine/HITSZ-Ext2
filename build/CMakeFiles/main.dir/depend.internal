@@ -20,6 +20,22 @@ CMakeFiles/main.dir/src/main.c.o
  ../include/params.h
  ../include/types.h
  /home/deadpool/Desktop/Programming/FileSystem/src/main.c
+CMakeFiles/main.dir/src/printer.c.o
+ ../include/defs.h
+ ../include/disk.h
+ ../include/ext2.h
+ ../include/filetype.h
+ ../include/params.h
+ ../include/types.h
+ /home/deadpool/Desktop/Programming/FileSystem/src/printer.c
+CMakeFiles/main.dir/src/raise.c.o
+ ../include/defs.h
+ ../include/disk.h
+ ../include/ext2.h
+ ../include/filetype.h
+ ../include/params.h
+ ../include/types.h
+ /home/deadpool/Desktop/Programming/FileSystem/src/raise.c
 CMakeFiles/main.dir/src/shell.c.o
  ../include/defs.h
  ../include/disk.h

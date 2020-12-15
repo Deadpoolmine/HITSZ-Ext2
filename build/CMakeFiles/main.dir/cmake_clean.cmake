@@ -2,6 +2,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/main.dir/src/disk.c.o"
   "CMakeFiles/main.dir/src/ext2.c.o"
   "CMakeFiles/main.dir/src/main.c.o"
+  "CMakeFiles/main.dir/src/printer.c.o"
+  "CMakeFiles/main.dir/src/raise.c.o"
   "CMakeFiles/main.dir/src/shell.c.o"
   "CMakeFiles/main.dir/src/utils.c.o"
   "main"

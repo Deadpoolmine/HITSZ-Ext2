@@ -96,9 +96,35 @@ CMakeFiles/main.dir/src/main.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/main.dir/src/main.c.s"
 	/bin/x86_64-linux-gnu-gcc-9 $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/deadpool/Desktop/Programming/FileSystem/src/main.c -o CMakeFiles/main.dir/src/main.c.s
 
+CMakeFiles/main.dir/src/printer.c.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/src/printer.c.o: ../src/printer.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/deadpool/Desktop/Programming/FileSystem/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object CMakeFiles/main.dir/src/printer.c.o"
+	/bin/x86_64-linux-gnu-gcc-9 $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/main.dir/src/printer.c.o   -c /home/deadpool/Desktop/Programming/FileSystem/src/printer.c
+
+CMakeFiles/main.dir/src/printer.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/main.dir/src/printer.c.i"
+	/bin/x86_64-linux-gnu-gcc-9 $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/deadpool/Desktop/Programming/FileSystem/src/printer.c > CMakeFiles/main.dir/src/printer.c.i
+
+CMakeFiles/main.dir/src/printer.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/main.dir/src/printer.c.s"
+	/bin/x86_64-linux-gnu-gcc-9 $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/deadpool/Desktop/Programming/FileSystem/src/printer.c -o CMakeFiles/main.dir/src/printer.c.s
+
+CMakeFiles/main.dir/src/raise.c.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/src/raise.c.o: ../src/raise.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/deadpool/Desktop/Programming/FileSystem/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building C object CMakeFiles/main.dir/src/raise.c.o"
+	/bin/x86_64-linux-gnu-gcc-9 $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/main.dir/src/raise.c.o   -c /home/deadpool/Desktop/Programming/FileSystem/src/raise.c
+
+CMakeFiles/main.dir/src/raise.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/main.dir/src/raise.c.i"
+	/bin/x86_64-linux-gnu-gcc-9 $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/deadpool/Desktop/Programming/FileSystem/src/raise.c > CMakeFiles/main.dir/src/raise.c.i
+
+CMakeFiles/main.dir/src/raise.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/main.dir/src/raise.c.s"
+	/bin/x86_64-linux-gnu-gcc-9 $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/deadpool/Desktop/Programming/FileSystem/src/raise.c -o CMakeFiles/main.dir/src/raise.c.s
+
 CMakeFiles/main.dir/src/shell.c.o: CMakeFiles/main.dir/flags.make
 CMakeFiles/main.dir/src/shell.c.o: ../src/shell.c
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/deadpool/Desktop/Programming/FileSystem/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object CMakeFiles/main.dir/src/shell.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/deadpool/Desktop/Programming/FileSystem/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building C object CMakeFiles/main.dir/src/shell.c.o"
 	/bin/x86_64-linux-gnu-gcc-9 $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/main.dir/src/shell.c.o   -c /home/deadpool/Desktop/Programming/FileSystem/src/shell.c
 
 CMakeFiles/main.dir/src/shell.c.i: cmake_force
@@ -111,7 +137,7 @@ CMakeFiles/main.dir/src/shell.c.s: cmake_force
 
 CMakeFiles/main.dir/src/utils.c.o: CMakeFiles/main.dir/flags.make
 CMakeFiles/main.dir/src/utils.c.o: ../src/utils.c
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/deadpool/Desktop/Programming/FileSystem/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building C object CMakeFiles/main.dir/src/utils.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/deadpool/Desktop/Programming/FileSystem/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building C object CMakeFiles/main.dir/src/utils.c.o"
 	/bin/x86_64-linux-gnu-gcc-9 $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/main.dir/src/utils.c.o   -c /home/deadpool/Desktop/Programming/FileSystem/src/utils.c
 
 CMakeFiles/main.dir/src/utils.c.i: cmake_force
@@ -127,6 +153,8 @@ main_OBJECTS = \
 "CMakeFiles/main.dir/src/disk.c.o" \
 "CMakeFiles/main.dir/src/ext2.c.o" \
 "CMakeFiles/main.dir/src/main.c.o" \
+"CMakeFiles/main.dir/src/printer.c.o" \
+"CMakeFiles/main.dir/src/raise.c.o" \
 "CMakeFiles/main.dir/src/shell.c.o" \
 "CMakeFiles/main.dir/src/utils.c.o"
 
@@ -136,11 +164,13 @@ main_EXTERNAL_OBJECTS =
 main: CMakeFiles/main.dir/src/disk.c.o
 main: CMakeFiles/main.dir/src/ext2.c.o
 main: CMakeFiles/main.dir/src/main.c.o
+main: CMakeFiles/main.dir/src/printer.c.o
+main: CMakeFiles/main.dir/src/raise.c.o
 main: CMakeFiles/main.dir/src/shell.c.o
 main: CMakeFiles/main.dir/src/utils.c.o
 main: CMakeFiles/main.dir/build.make
 main: CMakeFiles/main.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/deadpool/Desktop/Programming/FileSystem/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking C executable main"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/deadpool/Desktop/Programming/FileSystem/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Linking C executable main"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/main.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
