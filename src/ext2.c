@@ -658,7 +658,7 @@ create_file(char *path){
             printf("create_dir() not find path: %s\n", path);
             printf("create_dir() now we'll create one for you !\n");
         #endif // DEBUG
-        /* 创建不存在的目录 */
+        /* 创建不存在的文件 */
         struct inode* next_inode = new_inode(FILE);
         uint32 inode_index = create_inode(next_inode);
         struct dir_item* dir_item = new_dir_item(FILE, inode_index, dir_name);
@@ -802,7 +802,20 @@ copy_file(char *from_file_path, char *to_file_path){
     #ifdef DEBUG
         printf("from_path %s , to_path %s\n", from_file_path, to_file_path);
     #endif // DEBUG
+    char *to_file_name = get_file_name(to_file_path);
+    int to_file_name_len = strlen(to_file_name);
+    int to_file_path_len = strlen(to_file_path);
+    char *pre_to_file_path = (char *)malloc(to_file_path_len - to_file_name_len);
+    for (int i = 0; i < to_file_path_len - to_file_name_len; i++)
+    {
+        pre_to_file_path[i] = to_file_path[i];
+    }
     
+    if(find_dir_item(pre_to_file_path, &from_dir_name, &from_current_dir_item, &from_last_dir_item, NOT_FOLLOW) < 0){
+        //printf("copy_file() source file not exist!\n");
+        raise_path_not_exist("cp - destionation - directory", pre_to_file_path);
+        return -1;
+    }
 
     if(find_dir_item(from_file_path, &from_dir_name, &from_current_dir_item, &from_last_dir_item, NOT_FOLLOW) < 0){
         //printf("copy_file() source file not exist!\n");
@@ -814,6 +827,7 @@ copy_file(char *from_file_path, char *to_file_path){
         raise_path_exist("cp - destination", to_file_path);
         return -1;
     }
+    
     struct inode* src_inode = read_inode(from_current_dir_item->inode_id);
     struct inode* dest_inode = create_file(to_file_path);
     if(!dest_inode){
