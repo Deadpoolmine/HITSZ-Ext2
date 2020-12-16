@@ -557,11 +557,12 @@ swith_current_dir(char *path){
     struct dir_item* last_dir_item;
     struct inode* current_inode;
     char *dir_name;
-    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, FOLLOW) < 0){
+    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW) < 0){
         /* printf("path %s is not a directory", path); */
         raise_path_not_exist("cd", path);
         return;
     }
+    find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, FOLLOW);
     if(current_dir_item->type == FILE)
         raise_path_type_error("cd", path, DIR);
         //printf("\e[35m%s\e[0m \e[31mis not a directory \e[0m\n", path);
