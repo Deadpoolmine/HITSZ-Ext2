@@ -430,6 +430,7 @@ find_dir_item(char *path, char **dir_name, struct dir_item** current_dir_item, s
     *last_dir_item = NULL;
     *current_dir_item = NULL;
     struct dir_item *last_last_dir_item = NULL;
+    //int is_parent_dir = 
     if(strcmp(path, "/") == 0){
         /* / */
         *current_dir_item = root_dir_item;
