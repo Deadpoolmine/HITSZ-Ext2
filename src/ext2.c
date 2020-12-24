@@ -528,12 +528,18 @@ shrink_dir_items(uint32 inode_id, struct inode* inode){
         if(inode->block_point[i] != INVALID_INODE_POINT){
             total_dir_item -= NDIRITEM_PER_BLK;
             int dir_item_per_blk = total_dir_item >= 0 ? NDIRITEM_PER_BLK : total_dir_item + NDIRITEM_PER_BLK;
+            int is_find = 0;
             for (int j = 0; j < dir_item_per_blk; j++)
             {
                 struct dir_item* dir_item = read_dir_item(inode, i, j);
                 if(dir_item->valid){
+                    is_find = 1;
                     chache_dir_items[valid_dir_item_count++] = *dir_item;
                 }
+            }
+            if(!is_find){
+                release_block(inode->block_point[i]);
+                inode->block_point[i] = INVALID_INODE_POINT;
             }
         }
     }
@@ -1021,14 +1027,13 @@ remove_file(char *path){
         return -1;
     }
     current_dir_item->valid = 0;
-    
+    current_inode = read_inode(current_dir_item->inode_id);
+    last_inode = read_inode(last_dir_item->inode_id);
     if(current_dir_item->type == DIR){
         /* 修改了就得同步，此时对应的情况应该是remove . .. */
         sync_dir_item(last_inode, current_dir_item);
         return -1;
     }
-    last_inode = read_inode(last_dir_item->inode_id);
-    current_inode = read_inode(current_dir_item->inode_id);
     for (int i = 0; i < SINGLE + SIGNLELINK; i++)
     {
         if(current_inode->block_point[i] != INVALID_INODE_POINT){
@@ -1084,6 +1089,8 @@ remove_directory(char *path){
                     remove_directory(src_path);
                 }
             }
+            release_block(current_inode->block_point[i]);
+            current_inode->block_point[i] = INVALID_INODE_POINT;
         }
     }
     current_inode->size = 0;
