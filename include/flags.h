@@ -5,5 +5,8 @@
 #define NOT_FOLLOW 0
 #define FOLLOW 1
 
+#define NOT_REMOVE 0
+#define REMOVE 1
+
 #define UN_FOOT_PRINT 0
 #define FOOT_PRINT 1

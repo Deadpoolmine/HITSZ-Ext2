@@ -422,8 +422,10 @@ write_inode_block(struct inode* dest_inode, char *buf, int sz, int blk_offset,in
  * 没有找到返回-1，否则返回0
  */
 int
-find_dir_item(char *path, char **dir_name, struct dir_item** current_dir_item, struct dir_item** last_dir_item, int is_follow){
-    struct dir_item* last_last_dir_item;
+find_dir_item(char *path, char **dir_name, struct dir_item** current_dir_item, struct dir_item** last_dir_item, int is_follow, int is_remove){
+    *last_dir_item = NULL;
+    *current_dir_item = NULL;
+    struct dir_item *last_last_dir_item = NULL;
     if(strcmp(path, "/") == 0){
         /* / */
         *current_dir_item = root_dir_item;
@@ -468,15 +470,7 @@ find_dir_item(char *path, char **dir_name, struct dir_item** current_dir_item, s
         if(strlen(*dir_name) == 0){
             break;
         }
-        if(!strcmp(*dir_name, "."))
-            continue;
-        if(!strcmp(*dir_name, "..")){
-            *current_dir_item = *last_dir_item;
-            *last_dir_item = last_last_dir_item;   
-            if(is_follow)
-                pop();
-            continue;
-        }
+        
         //printf("find_dir_item() path %s, dirname %s , len %ld\n", path, *dir_name, strlen(*dir_name));
         int blk_index = 0;
         int block_off = 0;
@@ -503,11 +497,29 @@ find_dir_item(char *path, char **dir_name, struct dir_item** current_dir_item, s
                 printf("find_inde() %s is a file , stop here!\n", *dir_name);
             #endif // DEBUG
             return 0;
-        }    
-        if(is_follow){
-            push(next_dir_item);
         }
-            
+        if(!strcmp(*dir_name, ".")){
+            //do nothing
+        }
+        //如果是要移除".."目录的化，就不判断了；
+        else if(!is_remove && !strcmp(*dir_name, "..")){
+            if(*last_dir_item == NULL)
+                *last_dir_item = root_dir_item;
+            if(last_last_dir_item == NULL)
+                last_last_dir_item = root_dir_item;
+            *current_dir_item = *last_dir_item;
+            *last_dir_item = last_last_dir_item;
+            if(is_follow) {
+                struct dir_item* item = pop();
+                if(!strcmp(item->name, "/"))
+                    push(root_dir_item);
+            }
+        }
+        else
+        {
+            if(is_follow)
+                push(next_dir_item);
+        }   
     }
     return 0;
 }
@@ -519,7 +531,7 @@ judge_path_type(char *path){
     struct inode* current_inode;
     char *dir_name;
 
-    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW) < 0){
+    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW, NOT_REMOVE) < 0){
         #ifdef DEBUG
             printf("judge_path_type() source not exist!\n");
             printf("\e[35mcp: source file/directory is not exist\e[0m\n");
@@ -576,12 +588,12 @@ swith_current_dir(char *path){
     struct dir_item* last_dir_item;
     struct inode* current_inode;
     char *dir_name;
-    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW) < 0){
+    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW, NOT_REMOVE) < 0){
         /* printf("path %s is not a directory", path); */
         raise_path_not_exist("cd", path);
         return;
     }
-    find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, FOLLOW);
+    find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, FOLLOW, NOT_REMOVE);
     if(current_dir_item->type == FILE)
         raise_path_type_error("cd", path, DIR);
         //printf("\e[35m%s\e[0m \e[31mis not a directory \e[0m\n", path);
@@ -598,7 +610,7 @@ check_dir(char *path){
     struct dir_item* last_dir_item;
     struct inode* current_inode;
     char *dir_name;
-    find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW);
+    find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW, NOT_REMOVE);
     current_inode = read_inode(current_dir_item->inode_id);
     int blk_index = 0;
     int block_off = 0;
@@ -614,7 +626,7 @@ observe_fs_structure(char *path, int level, int show_detail){
     struct dir_item* last_dir_item;
     struct inode* current_inode;
     char *dir_name;
-    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW) < 0){
+    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW, NOT_REMOVE) < 0){
         //printf("\e[35mcp: path \e[0m\e[0m%s\e[0m\e[35m is not exist\e[0m\n", path);
         raise_path_not_exist("stru", path);
         return;
@@ -673,7 +685,7 @@ create_file(char *path){
     #ifdef DEBUG
         printf("path %s \n", path);
     #endif //DEBUG
-    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW) < 0){
+    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW, NOT_REMOVE) < 0){
         #ifdef DEBUG
             printf("create_dir() not find path: %s\n", path);
             printf("create_dir() now we'll create one for you !\n");
@@ -713,7 +725,7 @@ recurse_create_dir(char *path){
     #ifdef DEBUG
         printf("path %s \n", path);
     #endif // DEBUG
-    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW) < 0){
+    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW, NOT_REMOVE) < 0){
         #ifdef DEBUG
             printf("create_dir() not find path: %s\n", path);
             printf("create_dir() now we'll create one for you !\n");
@@ -768,7 +780,7 @@ create_dir(char *path){
         sync_super_blk();
         return dir_node;
     }
-    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW) == 0){
+    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW, NOT_REMOVE) == 0){
         raise_path_exist("mkdir", path);
         return read_inode(current_dir_item->inode_id);
     }
@@ -794,8 +806,8 @@ check_path_same(char *path1, char *path2){
     char *dir_name1;
     char *dir_name2;
 
-    find_dir_item(path1, &dir_name1, &current_dir_item1, &last_dir_item1, NOT_FOLLOW);
-    find_dir_item(path2, &dir_name2, &current_dir_item2, &last_dir_item2, NOT_FOLLOW);
+    find_dir_item(path1, &dir_name1, &current_dir_item1, &last_dir_item1, NOT_FOLLOW, NOT_REMOVE);
+    find_dir_item(path2, &dir_name2, &current_dir_item2, &last_dir_item2, NOT_FOLLOW, NOT_REMOVE);
     if(strcmp(dir_name1, dir_name2) != 0)
         return 0;
     if(current_dir_item1->inode_id != current_dir_item2->inode_id)
@@ -831,18 +843,18 @@ copy_file(char *from_file_path, char *to_file_path){
         pre_to_file_path[i] = to_file_path[i];
     }
     
-    if(find_dir_item(pre_to_file_path, &from_dir_name, &from_current_dir_item, &from_last_dir_item, NOT_FOLLOW) < 0){
+    if(find_dir_item(pre_to_file_path, &from_dir_name, &from_current_dir_item, &from_last_dir_item, NOT_FOLLOW,NOT_REMOVE) < 0){
         //printf("copy_file() source file not exist!\n");
         raise_path_not_exist("cp - destionation - directory", pre_to_file_path);
         return -1;
     }
 
-    if(find_dir_item(from_file_path, &from_dir_name, &from_current_dir_item, &from_last_dir_item, NOT_FOLLOW) < 0){
+    if(find_dir_item(from_file_path, &from_dir_name, &from_current_dir_item, &from_last_dir_item, NOT_FOLLOW,NOT_REMOVE) < 0){
         //printf("copy_file() source file not exist!\n");
         raise_path_not_exist("cp - source", from_file_path);
         return -1;
     }
-    if(find_dir_item(to_file_path, &to_dir_name, &to_current_dir_item, &to_last_dir_item, NOT_FOLLOW) == 0){
+    if(find_dir_item(to_file_path, &to_dir_name, &to_current_dir_item, &to_last_dir_item, NOT_FOLLOW, NOT_REMOVE) == 0){
         //printf("copy_file() dest file exists!\n");
         raise_path_exist("cp - destination", to_file_path);
         return -1;
@@ -855,7 +867,7 @@ copy_file(char *from_file_path, char *to_file_path){
         //raise_path_not_exist("cp - destination", to_file_path);
         return -1;
     }
-    find_dir_item(to_file_path, &to_dir_name, &to_current_dir_item, &to_last_dir_item, NOT_FOLLOW);
+    find_dir_item(to_file_path, &to_dir_name, &to_current_dir_item, &to_last_dir_item, NOT_FOLLOW, NOT_REMOVE);
     for (int i = 0; i < SINGLE + SIGNLELINK; i++)
     {
         uint32 origin_block_num = src_inode->block_point[i];
@@ -882,7 +894,7 @@ copy_directory(char *from_dir_path, char *to_dir_path, int is_init, char *origin
         origin_to_dir_path = to_dir_path;
     }
     
-    if(find_dir_item(to_dir_path, &to_dir_name, &to_current_dir_item, &to_last_dir_item, NOT_FOLLOW) == 0){
+    if(find_dir_item(to_dir_path, &to_dir_name, &to_current_dir_item, &to_last_dir_item, NOT_FOLLOW, NOT_REMOVE) == 0){
         //printf("copy_directory() dest directory exists!\n");
         if(memcmp(get_file_name(to_dir_path), ".", sizeof(".")) 
         && memcmp(get_file_name(to_dir_path), "..", sizeof("..")))
@@ -891,7 +903,7 @@ copy_directory(char *from_dir_path, char *to_dir_path, int is_init, char *origin
     }
     struct inode* dest_dir_node = create_dir(to_dir_path);
     /* 找到源目录对应的 目录的 dir */
-    find_dir_item(from_dir_path, &from_dir_name, &from_current_dir_item, &from_last_dir_item, NOT_FOLLOW);
+    find_dir_item(from_dir_path, &from_dir_name, &from_current_dir_item, &from_last_dir_item, NOT_FOLLOW, NOT_REMOVE);
     struct inode* src_dir_node = read_inode(from_current_dir_item->inode_id);
     int total_dir_item = src_dir_node->size / DIRITEMSZ;
     /* 遍历源目录，调用copy file和递归调用copy directory */
@@ -947,7 +959,7 @@ read_file(char *path){
     struct inode* current_inode;
     char *dir_name;
     char *file_name = get_file_name(path);
-    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW) < 0){
+    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW, NOT_REMOVE) < 0){
         /* printf("read_file() source file not exist!\n");
         printf("\e[35mcp: source file is not exist\e[0m\n"); */
         raise_path_not_exist("cat", path);
@@ -978,7 +990,7 @@ write_file(char *path){
     struct inode* current_inode;
     char *dir_name;
     char *file_name = get_file_name(path);
-    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW) < 0){
+    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW, NOT_REMOVE) < 0){
         /* printf("write_file() source file not exist!\n");
         printf("\e[35mcp: source file is not exist\e[0m\n"); */
         raise_path_not_exist("tee", path);
@@ -1033,7 +1045,7 @@ remove_file(char *path){
     struct inode* last_inode;
     char *dir_name;
 
-    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW) < 0){
+    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW, REMOVE) < 0){
         /* printf("remove_file() source not exist!\n");
         printf("\e[35mcp: source file/directory is not exist\e[0m\n"); */
         raise_path_not_exist("rm", path);
@@ -1069,7 +1081,7 @@ remove_directory(char *path){
     struct inode* current_inode;
     struct inode* last_inode;
     char *dir_name;
-    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW) < 0){
+    if(find_dir_item(path, &dir_name, &current_dir_item, &last_dir_item, NOT_FOLLOW, REMOVE) < 0){
         //printf("remove_file() source not exist!\n");
         //printf("\e[35msource file/directory is not exist\e[0m\n");
         raise_path_not_exist("rm", path);
@@ -1123,6 +1135,7 @@ remove_path(char *path){
     }
     int path_type = judge_path_type(path);
     if(path_type < 0){
+        raise_common_error("rm","can't remove a path doesn't exists");
         return;
     }
     if(path_type == FILE){
