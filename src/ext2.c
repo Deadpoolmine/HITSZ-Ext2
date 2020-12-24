@@ -395,8 +395,12 @@ sync_dir_item(struct inode* dir_node, struct dir_item* update_dir_item) {
 void
 write_inode_block(struct inode* dest_inode, char *buf, int sz, int blk_offset,int blk_index){
     uint32 block_num;
-    if(dest_inode->block_point[blk_index] == INVALID_INODE_POINT)
+    if(dest_inode->block_point[blk_index] == INVALID_INODE_POINT){
         block_num = get_free_block();
+        char*  buf = (char *)malloc(DATABLKSZ);
+        memset(buf, 0 , DATABLKSZ);
+        write_block(block_num, buf, DATABLKSZ, 0);
+    }
     else
         block_num = dest_inode->block_point[blk_index];
     dest_inode->block_point[blk_index] = block_num;
