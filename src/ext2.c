@@ -423,6 +423,7 @@ write_inode_block(struct inode* dest_inode, char *buf, int sz, int blk_offset,in
  */
 int
 find_dir_item(char *path, char **dir_name, struct dir_item** current_dir_item, struct dir_item** last_dir_item, int is_follow){
+    struct dir_item* last_last_dir_item;
     if(strcmp(path, "/") == 0){
         /* / */
         *current_dir_item = root_dir_item;
@@ -467,6 +468,15 @@ find_dir_item(char *path, char **dir_name, struct dir_item** current_dir_item, s
         if(strlen(*dir_name) == 0){
             break;
         }
+        if(!strcmp(*dir_name, "."))
+            continue;
+        if(!strcmp(*dir_name, "..")){
+            *current_dir_item = *last_dir_item;
+            *last_dir_item = last_last_dir_item;   
+            if(is_follow)
+                pop();
+            continue;
+        }
         //printf("find_dir_item() path %s, dirname %s , len %ld\n", path, *dir_name, strlen(*dir_name));
         int blk_index = 0;
         int block_off = 0;
@@ -485,6 +495,7 @@ find_dir_item(char *path, char **dir_name, struct dir_item** current_dir_item, s
             #endif // DEBUG
             return -1;
         }
+        last_last_dir_item = *last_dir_item;
         *last_dir_item = *current_dir_item;
         *current_dir_item = next_dir_item;
         if(next_dir_item->type == FILE){
@@ -492,9 +503,11 @@ find_dir_item(char *path, char **dir_name, struct dir_item** current_dir_item, s
                 printf("find_inde() %s is a file , stop here!\n", *dir_name);
             #endif // DEBUG
             return 0;
-        }
-        if(is_follow)
+        }    
+        if(is_follow){
             push(next_dir_item);
+        }
+            
     }
     return 0;
 }
